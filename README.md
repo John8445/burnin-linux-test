@@ -1,118 +1,182 @@
-# Burnin Linux Test Suite
+# 🔥 Server Burn-in Testing Toolkit
 
-Automation scripts and tools for running PassMark's BurnInTest on Linux servers.
+A comprehensive, enterprise-grade server burn-in testing toolkit with real-time thermal monitoring, power consumption tracking, and web dashboard.
 
-## Overview
+## ✨ Features
 
-This repository contains a collection of shell scripts designed to automate the deployment, execution, and monitoring of BurnInTest on Linux systems. It includes thermal monitoring, web dashboard functionality, and automated installation processes.
+- **One-line installation** with automatic dependency management
+- **Professional stress testing** using PassMark BurnInTest
+- **Real-time monitoring** with web dashboard and console views
+- **Power consumption tracking** via IPMI (on supported hardware)
+- **CPU temperature monitoring** with intelligent sensor detection
+- **Beautiful web interface** accessible from any device
+- **Detailed analysis** with min/max/average statistics
+- **Cross-platform support** (RHEL/CentOS/AlmaLinux/Ubuntu/Debian/Arch/openSUSE)
 
-## Repository Structure
+## 🚀 Quick Start
 
-`
-burnin-linux-test/
-+-- scripts/           # Shell scripts for automation
-�   +-- launch-burnin.sh           # Main launcher for tests
-�   +-- enhanced-install-burnin.sh # Automated installation
-�   +-- watch_burnin.sh           # Monitor running tests
-�   +-- view-dashboard.sh         # View test dashboard
-�   +-- burnin-web-dashboard.sh   # Web interface server
-�   +-- thermal_monitor_hwmon.sh  # Hardware thermal monitoring
-�   +-- thermal_power_monitor.sh  # Power and thermal analysis
-�   +-- analyze-thermal.sh        # Thermal data analysis
-+-- config/           # Configuration files
-�   +-- cmdline_config.txt        # BurnInTest CLI configuration
-�   +-- plugin_example/           # Example plugin configs
-+-- docs/            # Documentation
-`
+```bash
+wget http://69.46.20.130:8080/enhanced-install-burnin.sh && sudo bash enhanced-install-burnin.sh
+📦 What's Included
+Core Scripts
 
-## Prerequisites
+enhanced-install-burnin.sh - Automated installer with dependency management
+launch-burnin.sh - Interactive test launcher with duration/component selection
+thermal_power_monitor.sh - Enhanced monitoring (temp + power + resources)
+thermal_monitor_hwmon.sh - Basic temperature monitoring
+analyze-thermal.sh - Comprehensive log analyzer with statistical analysis
+watch_burnin.sh - Pretty console monitoring viewer
+burnin-web-dashboard.sh - Web dashboard server
+view-dashboard.sh - Quick dashboard launcher
 
-- Linux system (Ubuntu/Debian recommended)
-- BurnInTest Linux edition (obtain from PassMark Software)
-- Bash shell
-- Root/sudo access for hardware monitoring
-- Web server (optional, for dashboard functionality)
+New Web Dashboard
 
-## Installation
+Real-time updates every 5 seconds
+Clean, modern interface with dark theme
+Mobile-friendly responsive design
+Remote monitoring from any browser
+No installation required on client side
 
-1. Clone this repository:
-   `ash
-   git clone https://github.com/yourusername/burnin-linux-test.git
-   cd burnin-linux-test
-   `
+Components Tested
 
-2. Download BurnInTest Linux from [PassMark Software](https://www.passmark.com/products/burnintest/index.php)
+CPU - Mathematical operations stress test
+Memory - RAM read/write patterns
+Disk - I/O operations on mounted filesystems
+Network - Loopback network stress testing
 
-3. Place the BurnInTest binaries in the repository root:
-   - it_cmd_line_x64
-   - it_gui_x64 (if using GUI version)
+💻 System Requirements
+Supported Operating Systems
 
-4. Make scripts executable:
-   `ash
-   chmod +x scripts/*.sh
-   `
+RHEL/CentOS/AlmaLinux 8+
+Rocky Linux 8+
+Ubuntu 20.04+
+Debian 10+
+openSUSE Leap 15+
+Arch Linux
+Fedora 30+
 
-5. Run the installation script:
-   `ash
-   sudo ./scripts/enhanced-install-burnin.sh
-   `
+Dependencies (Auto-installed)
 
-## Usage
+Python 3 - Web dashboard server
+bc - Basic calculator for thermal monitoring
+lm-sensors - Hardware monitoring support
+ipmitool - IPMI interface for power monitoring
+stress-ng - Alternative stress testing tool
+Various system utilities (lsof, net-tools, pciutils, etc.)
 
-### Basic Test Execution
-`ash
-./scripts/launch-burnin.sh
-`
+📖 Usage
+1. Installation
+bashwget http://69.46.20.130:8080/enhanced-install-burnin.sh
+sudo bash enhanced-install-burnin.sh
+2. Navigate to Installation Directory
+bashcd /tmp/burnin-YYYYMMDD_HHMMSS
+3. Run Tests
+bash./launch-burnin.sh
+Choose:
 
-### Monitor Running Tests
-`ash
-./scripts/watch_burnin.sh
-`
+Duration: 10 minutes to 24 hours (or run forever)
+Components: Basic (CPU+Memory+Disk) or Standard (+Network)
+Monitoring: Enhanced (with power) or Basic (temp only)
+Web Dashboard: Start on port 8081 (optional)
 
-### Thermal Monitoring
-`ash
-# Hardware-based monitoring
-sudo ./scripts/thermal_monitor_hwmon.sh
+4. Monitor Tests
+Option 1: Web Dashboard (Recommended)
+bash# When prompted during launch, choose 'y' for web dashboard
+# Or start manually:
+./view-dashboard.sh
 
-# Combined thermal and power monitoring
-sudo ./scripts/thermal_power_monitor.sh
-`
+# Access at: http://[server-ip]:8081
+Option 2: Pretty Console View
+bash./watch_burnin.sh
+Option 3: Raw Log Monitoring
+bashtail -f burnin_*.txt
+5. Analyze Results
+bash./analyze-thermal.sh
+📊 Enhanced Monitoring Features
+Power Monitoring (IPMI)
 
-### Web Dashboard
-`ash
-./scripts/burnin-web-dashboard.sh
-# Access at http://localhost:8080
-`
+Real-time power consumption in watts
+Min/max/average power statistics
+Total energy consumed (kWh)
+Works on servers with IPMI/BMC hardware
 
-## Configuration
+Resource Tracking
 
-The main configuration file is located at config/cmdline_config.txt. This file controls:
-- Test duration
-- Test types to run
-- Temperature thresholds
-- Logging options
+CPU usage percentage
+RAM usage percentage
+System load averages
+All data logged to CSV format
 
-## Scripts Description
+Temperature Monitoring
 
-- **enhanced-install-burnin.sh**: Automated setup script that handles dependencies and configuration
-- **launch-burnin.sh**: Primary script to start burn-in tests with proper configuration
-- **watch_burnin.sh**: Real-time monitoring of test progress and results
-- **thermal_monitor_hwmon.sh**: Monitors system temperatures using hwmon interface
-- **thermal_power_monitor.sh**: Advanced monitoring including power consumption
-- **analyze-thermal.sh**: Post-test thermal data analysis and reporting
-- **burnin-web-dashboard.sh**: Starts a web server for remote monitoring
-- **view-dashboard.sh**: Console-based dashboard viewer
+Intelligent CPU sensor detection
+Support for multiple sensor types (coretemp, k10temp, etc.)
+Color-coded temperature warnings
 
-## License
+⏱️ Test Duration Recommendations
 
-The scripts in this repository are provided under the MIT License. See LICENSE file for details.
+Quick Check: 10-30 minutes - Basic hardware verification
+Standard: 1-4 hours - Recommended for production servers
+Thorough: 8-12 hours - Overnight validation
+Maximum: 24 hours - Complete reliability testing
 
-**Note**: BurnInTest software is proprietary and licensed separately by PassMark Software Pty Ltd.
+🌡️ Temperature Guidelines
+RangeStatusDescription< 70°C🟢 EXCELLENTOptimal cooling performance70-80°C🟢 GOODNormal operating temperature80-90°C🟡 WARNINGMonitor closely> 90°C🔴 CRITICALCooling inspection needed
+⚡ Power Consumption Guidelines
+RangeStatusDescription< 300W🔵 EFFICIENTLow power consumption300-500W🟢 NORMALTypical server load500-700W🟡 HIGHConsider optimization> 700W🔴 VERY HIGHReview cooling and PSU
+📁 Log File Format
+Enhanced monitoring creates CSV logs with:
+csvTimestamp,CPU_Temp_C,Power_W,CPU_Usage_%,RAM_Usage_%,RAM_Used_MB,RAM_Total_MB,Load_1m,Load_5m,Load_15m
+2025-08-05 02:28:24,71.1,569,99,82,104768,127436,28.48,27.93,26.15
+🛠️ Troubleshooting
+No Power Readings
 
-## Contributing
+IPMI only works on physical servers with BMC hardware
+Virtual machines will show "N/A" for power
+Ensure IPMI is configured in BIOS/iDRAC/iLO
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Web Dashboard Issues
+bash# Check if Python 3 is installed
+python3 --version
 
-## Support
+# Check if port 8081 is open
+firewall-cmd --add-port=8081/tcp
+Missing Dependencies
+The installer handles all dependencies automatically. If issues persist:
+bash# RHEL/CentOS/AlmaLinux
+sudo dnf install python3 bc lm_sensors ipmitool
 
-For issues with the scripts, please open a GitHub issue. For BurnInTest software support, contact PassMark Software.
+# Ubuntu/Debian  
+sudo apt install python3 bc lm-sensors ipmitool
+🏗️ File Structure
+/tmp/burnin-YYYYMMDD_HHMMSS/
+├── bit_cmd_line_x64              # BurnInTest executable
+├── launch-burnin.sh              # Interactive launcher
+├── thermal_power_monitor.sh      # Enhanced monitoring
+├── thermal_monitor_hwmon.sh      # Basic monitoring
+├── analyze-thermal.sh            # Analysis tool
+├── watch_burnin.sh              # Console viewer
+├── burnin-web-dashboard.sh      # Web dashboard
+├── view-dashboard.sh            # Dashboard launcher
+├── burnin_*.txt                 # Log files (created during tests)
+├── *_summary.txt                # Test summaries
+└── system_info.txt              # System information
+📈 What's New
+Version 2.0 (Current)
+
+✨ Web dashboard with real-time monitoring
+⚡ IPMI power consumption tracking
+📊 Enhanced resource monitoring (CPU/RAM/Load)
+🎨 Improved console output with color coding
+🔧 Better sensor detection (CPU-only temps)
+🐛 Fixed analyze script parsing errors
+📦 Python 3 auto-installation
+
+🤝 Contributing
+Feel free to submit issues or pull requests to improve the toolkit.
+📜 License
+This toolkit is provided as-is for server validation purposes. BurnInTest is proprietary software from PassMark Software.
+👨‍💻 Author
+Enhanced burn-in toolkit with web dashboard capabilities for enterprise server testing and validation.
+
+For support or questions, please open an issue in the repository.
