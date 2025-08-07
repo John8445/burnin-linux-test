@@ -21,6 +21,16 @@ if [ ! -f "./bit_cmd_line_x64" ]; then
     exit 1
 fi
 
+# Check if libasound is available
+if ! ldd ./bit_cmd_line_x64 2>&1 | grep -q "not found"; then
+    :  # All good
+else
+    echo -e "${YELLOW}⚠️  Missing libraries detected${NC}"
+    echo -e "   BurnInTest may not start properly"
+    echo -e "   Try: ${GREEN}apt install libasound2${NC} or ${GREEN}dnf install alsa-lib${NC}"
+    echo ""
+fi
+
 # System information with icons
 HOSTNAME=$(hostname)
 CPU_CORES=$(nproc)
@@ -131,44 +141,12 @@ case $test_choice in
     *) echo -e "${RED}Invalid choice!${NC}"; exit 1 ;;
 esac
 
-# Monitoring type selection
-echo ""
-echo -e "${YELLOW}📊 Select Monitoring Type:${NC}"
-echo ""
-echo -e "   ${CYAN}1)${NC} ${BOLD}Enhanced${NC} (Temperature + Power + Resources)"
-echo -e "      Logs: temps, power usage, CPU/RAM usage, system load"
-echo ""
-echo -e "   ${CYAN}2)${NC} ${BOLD}Basic${NC} (Temperature only)"
-echo -e "      Logs: temperature readings only"
-echo ""
-
-read -p "$(echo -e ${BOLD})Enter choice (1-2):${NC} " monitor_choice
-
-case $monitor_choice in
-    1)
-        MONITOR_SCRIPT="./thermal_power_monitor.sh"
-        MONITOR_DESC="Enhanced monitoring"
-        # Check if enhanced script exists, if not use basic
-        if [ ! -f "$MONITOR_SCRIPT" ]; then
-            echo -e "${YELLOW}   Enhanced monitor not found, using basic${NC}"
-            MONITOR_SCRIPT="./thermal_monitor_hwmon.sh"
-            MONITOR_DESC="Basic monitoring"
-        fi
-        ;;
-    2)
-        MONITOR_SCRIPT="./thermal_monitor_hwmon.sh"
-        MONITOR_DESC="Basic monitoring"
-        ;;
-    *) echo -e "${RED}Invalid choice!${NC}"; exit 1 ;;
-esac
-
 # Summary and confirmation
 echo ""
 echo -e "${GREEN}📋 Test Configuration Summary:${NC}"
 echo -e "   ${BOLD}Duration:${NC} $DESC ($RECOMMENDATION)"
 echo -e "   ${BOLD}Components:${NC} $TEST_DESC"
-echo -e "   ${BOLD}Monitoring:${NC} $MONITOR_DESC"
-echo -e "   ${BOLD}Logs:${NC} Auto-generated with timestamp"
+echo -e "   ${BOLD}Monitoring:${NC} Consolidated (monitoring_data.csv)"
 echo ""
 
 read -p "$(echo -e ${YELLOW}${BOLD})Ready to start? (y/N):${NC} " confirm
@@ -181,11 +159,20 @@ fi
 # Start the test with visual feedback
 echo ""
 echo -e "${BLUE}🌡️  Starting monitoring...${NC}"
+
+# Always use thermal_power_monitor.sh now (it's consolidated)
+MONITOR_SCRIPT="./thermal_power_monitor.sh"
 $MONITOR_SCRIPT 10 &
 MONITOR_PID=$!
 
-# Give monitor time to start and show log file
+# Give monitor time to start
 sleep 2
+
+# Show where data is being logged
+MASTER_LOG="$(pwd)/monitoring_data.csv"
+echo -e "${GREEN}   ✓ Logging to: ${BOLD}monitoring_data.csv${NC}"
+echo -e "${CYAN}   📊 All test data consolidated in one file${NC}"
+echo ""
 
 # Ask about web dashboard
 echo ""
@@ -204,12 +191,6 @@ if [[ $start_web =~ ^[Yy]$ ]]; then
     echo ""
 fi
 
-# Find the log file that was just created
-THERMAL_LOG=$(ls -t burnin_*.txt 2>/dev/null | head -1)
-
-echo -e "${GREEN}   ✓ Logging to: ${BOLD}$THERMAL_LOG${NC}"
-echo ""
-
 # Countdown
 echo -e "${YELLOW}🚀 Starting burn-in test in...${NC}"
 for i in 3 2 1; do
@@ -222,18 +203,16 @@ echo -e "${RED}${BOLD}🔥 BURN-IN TEST RUNNING 🔥${NC}"
 echo "════════════════════════════════════════════════════════════════════════════════"
 echo ""
 echo -e "${CYAN}💡 Helpful Commands:${NC}"
-echo -e "   Monitor temps:  ${GREEN}tail -f $THERMAL_LOG${NC}"
-echo -e "   Live view:      ${GREEN}watch -n 1 'tail -10 $THERMAL_LOG'${NC}"
+echo -e "   Monitor temps:  ${GREEN}tail -f monitoring_data.csv${NC}"
+echo -e "   Live view:      ${GREEN}./watch_burnin.sh${NC}"
 echo -e "   Stop test:      ${GREEN}Press Ctrl+C${NC}"
 echo ""
 
-# Show power monitoring tip if using enhanced monitoring
-if [[ "$MONITOR_DESC" == "Enhanced monitoring" ]]; then
-    echo -e "${YELLOW}⚡ Power Monitoring Active:${NC}"
-    echo "   Tracking min/max/average power consumption"
-    echo "   Summary will be displayed after test completion"
-    echo ""
-fi
+# Show power monitoring tip
+echo -e "${YELLOW}⚡ Power Monitoring Active:${NC}"
+echo "   Tracking CPU temp, power consumption, and resources"
+echo "   All data saved to monitoring_data.csv"
+echo ""
 
 echo "════════════════════════════════════════════════════════════════════════════════"
 echo ""
@@ -266,38 +245,35 @@ echo -e "${GREEN}${BOLD}✅ TEST COMPLETED!${NC}"
 echo "════════════════════════════════════════════════════════════════════════════════"
 echo ""
 
-# Quick summary if log exists
-if [ -f "$THERMAL_LOG" ]; then
-    TEMP_COUNT=$(wc -l < "$THERMAL_LOG")
-    MAX_TEMP=$(awk -F',' 'NR>1 && $2!="" {if($2>max) max=$2} END {print max}' "$THERMAL_LOG")
-
-    echo -e "${CYAN}📊 Quick Summary:${NC}"
-    echo -e "   Log file: ${BOLD}$THERMAL_LOG${NC}"
-    echo -e "   Data points: $((TEMP_COUNT - 1))"
-
-    if [ ! -z "$MAX_TEMP" ]; then
-        echo -e "   Peak temperature: ${BOLD}${MAX_TEMP}°C${NC}"
-    fi
-
-    # Check if summary file exists (from enhanced monitoring)
-    SUMMARY_FILE="${THERMAL_LOG%.txt}_summary.txt"
-    if [ -f "$SUMMARY_FILE" ]; then
-        echo ""
-        echo -e "${GREEN}📝 Detailed summary available:${NC}"
-        echo -e "   ${BOLD}$SUMMARY_FILE${NC}"
-        echo ""
-        # Display power stats if available
-        if grep -q "Power Statistics:" "$SUMMARY_FILE"; then
-            echo -e "${YELLOW}⚡ Power Statistics:${NC}"
-            grep -A 4 "Power Statistics:" "$SUMMARY_FILE" | tail -4 | sed 's/^/   /'
+# Quick summary from monitoring_data.csv
+if [ -f "monitoring_data.csv" ]; then
+    # Get stats for the most recent test
+    last_test_id=$(awk -F',' '$7=="BURNIN_RUNNING" {id=$8} END {print id}' monitoring_data.csv)
+    
+    if [ ! -z "$last_test_id" ]; then
+        # Calculate stats for this test
+        max_temp=$(awk -F',' -v id="$last_test_id" '$8==id && $2!="N/A" {if($2>max)max=$2} END {print max}' monitoring_data.csv)
+        max_power=$(awk -F',' -v id="$last_test_id" '$8==id && $3!="N/A" {if($3>max)max=$3} END {print max}' monitoring_data.csv)
+        avg_cpu=$(awk -F',' -v id="$last_test_id" '$8==id && $4!="" {sum+=$4; count++} END {if(count>0) print int(sum/count)}' monitoring_data.csv)
+        
+        echo -e "${CYAN}📊 Quick Summary:${NC}"
+        echo -e "   Test ID: ${BOLD}$last_test_id${NC}"
+        if [ ! -z "$max_temp" ]; then
+            echo -e "   Peak CPU Temperature: ${BOLD}${max_temp}°C${NC}"
+        fi
+        if [ ! -z "$max_power" ] && [ "$max_power" != "N/A" ]; then
+            echo -e "   Peak Power Draw: ${BOLD}${max_power}W${NC}"
+        fi
+        if [ ! -z "$avg_cpu" ]; then
+            echo -e "   Average CPU Usage: ${BOLD}${avg_cpu}%${NC}"
         fi
     fi
     echo ""
 fi
 
 echo -e "${YELLOW}📈 Next Steps:${NC}"
-echo -e "   1. Run ${GREEN}./analyze-thermal.sh${NC} for detailed thermal analysis"
+echo -e "   1. Run ${GREEN}./analyze-thermal.sh${NC} for detailed analysis"
 echo -e "   2. Check BurnInTest logs for any errors"
-echo -e "   3. Review power consumption data (if available)"
-echo -e "   4. Save test logs for your records"
+echo -e "   3. View all historical data in monitoring_data.csv"
+echo -e "   4. Use ${GREEN}./watch_burnin.sh${NC} for live monitoring"
 echo ""

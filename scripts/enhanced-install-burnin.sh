@@ -1,3 +1,4 @@
+root@admin:/var/www/burnin-toolkit# cat  enhanced-install-burnin.sh
 cat > enhanced-install-burnin.sh << 'EOF'
 #!/bin/bash
 
@@ -28,7 +29,7 @@ echo -e "${BLUE}📦 Installing dependencies...${NC}"
 install_if_missing() {
     local package=$1
     local package_manager=$2
-    
+
     if ! command -v $package >/dev/null 2>&1 && ! $package_manager list installed $package >/dev/null 2>&1; then
         echo -e "   Installing $package..."
         $package_manager install -y $package >/dev/null 2>&1
@@ -39,7 +40,7 @@ install_if_missing() {
 if command -v dnf >/dev/null 2>&1; then
     echo "   Detected: RHEL/CentOS/AlmaLinux/Fedora"
     package_manager="dnf"
-    
+
     # Core packages
     packages=(
         bc
@@ -68,26 +69,26 @@ if command -v dnf >/dev/null 2>&1; then
         python3-pip
         lsof
     )
-    
+
     # Install packages
     echo -e "${CYAN}   Installing RHEL/Fedora packages...${NC}"
     for pkg in "${packages[@]}"; do
         $package_manager install -y "$pkg" >/dev/null 2>&1 || true
     done
-    
+
     # Enable and start necessary services
     systemctl enable --now ipmi >/dev/null 2>&1 || true
-    
+
     echo -e "${GREEN}   ✓ RHEL packages installed${NC}"
-    
+
 elif command -v apt >/dev/null 2>&1; then
     echo "   Detected: Debian/Ubuntu"
     package_manager="apt"
-    
+
     # Update package list
     echo -e "${CYAN}   Updating package lists...${NC}"
     apt update >/dev/null 2>&1
-    
+
     # Core packages for Debian/Ubuntu
     packages=(
         bc
@@ -115,22 +116,22 @@ elif command -v apt >/dev/null 2>&1; then
         python3-pip
         lsof
     )
-    
+
     # Try to install libasound2 (might have different names on different versions)
     echo -e "${CYAN}   Installing Debian/Ubuntu packages...${NC}"
     apt install -y libasound2t64 >/dev/null 2>&1 || apt install -y libasound2 >/dev/null 2>&1
-    
+
     # Install main packages
     for pkg in "${packages[@]}"; do
         apt install -y "$pkg" >/dev/null 2>&1 || true
     done
-    
+
     echo -e "${GREEN}   ✓ Debian packages installed${NC}"
-    
+
 elif command -v zypper >/dev/null 2>&1; then
     echo "   Detected: openSUSE"
     package_manager="zypper"
-    
+
     packages=(
         bc
         tar
@@ -156,17 +157,17 @@ elif command -v zypper >/dev/null 2>&1; then
         python3-pip
         lsof
     )
-    
+
     echo -e "${CYAN}   Installing openSUSE packages...${NC}"
     for pkg in "${packages[@]}"; do
         zypper install -y "$pkg" >/dev/null 2>&1 || true
     done
-    
+
     echo -e "${GREEN}   ✓ openSUSE packages installed${NC}"
-    
+
 elif command -v pacman >/dev/null 2>&1; then
     echo "   Detected: Arch Linux"
-    
+
     packages=(
         bc
         tar
@@ -193,12 +194,12 @@ elif command -v pacman >/dev/null 2>&1; then
         python-pip
         lsof
     )
-    
+
     echo -e "${CYAN}   Installing Arch packages...${NC}"
     for pkg in "${packages[@]}"; do
         pacman -S --noconfirm "$pkg" >/dev/null 2>&1 || true
     done
-    
+
     echo -e "${GREEN}   ✓ Arch packages installed${NC}"
 else
     echo -e "${YELLOW}   ⚠️  Unknown OS - manual package installation may be needed${NC}"
@@ -241,7 +242,7 @@ if command -v ipmitool >/dev/null 2>&1; then
     systemctl start ipmi >/dev/null 2>&1 || true
     systemctl enable ipmievd >/dev/null 2>&1 || true
     systemctl start ipmievd >/dev/null 2>&1 || true
-    
+
     # Test IPMI
     if ipmitool sensor list >/dev/null 2>&1; then
         echo -e "${GREEN}   ✓ IPMI configured and working${NC}"
